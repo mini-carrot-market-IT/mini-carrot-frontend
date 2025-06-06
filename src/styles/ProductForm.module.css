@@ -1,0 +1,139 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 2rem;
+}
+
+.form {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1);
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.imagePreview {
+  margin-top: 15px;
+  text-align: center;
+  padding: 15px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.imagePreview img {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.imagePreview p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 12px 24px;
+  background: #95a5a6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cancelButton:hover {
+  background: #7f8c8d;
+}
+
+.submitButton {
+  flex: 2;
+  padding: 12px 24px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submitButton:hover {
+  background: #c0392b;
+}
+
+.submitButton:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .form {
+    padding: 20px;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+} 

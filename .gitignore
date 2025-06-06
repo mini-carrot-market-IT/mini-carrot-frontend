@@ -1,0 +1,64 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+.env
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Docker
+.dockerignore
+
+# Kubernetes sensitive configs
+k8s/*-secret.yaml
+k8s/*-config.yaml
+k8s/production-*.yaml
+
+# Deployment scripts with sensitive info
+deploy-prod.sh
+*.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*~ 

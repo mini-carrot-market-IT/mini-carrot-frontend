@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: tuk-trainee12
+data:
+  USER_SERVICE_URL: "http://NODE_IP:31250"
+  PRODUCT_SERVICE_URL: "http://NODE_IP:31251"
+  NODE_IP: "223.130.154.117"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: tuk-trainee12
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: hwangsk0419/mini-carrot-frontend:clean-menu
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_USER_SERVICE_URL
+          value: "http://211.188.63.186:31250"
+        - name: NEXT_PUBLIC_PRODUCT_SERVICE_URL
+          value: "http://211.188.63.186:31251"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: tuk-trainee12
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 3000
+    nodePort: 31280
+  type: NodePort 
