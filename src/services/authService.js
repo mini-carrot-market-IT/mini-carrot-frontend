@@ -1,4 +1,5 @@
 import { userApi } from '../utils/api'
+import { notificationService } from './notificationService'
 
 export const authService = {
   // 회원가입
@@ -18,6 +19,11 @@ export const authService = {
         if (response.data.user && typeof window !== 'undefined') {
           localStorage.setItem('user', JSON.stringify(response.data.user))
         }
+        
+        // 회원가입 환영 알림 (자동 발송은 백엔드에서 처리, 프론트엔드에서는 추가 알림)
+        setTimeout(() => {
+          notificationService.showUserNotification('welcome')
+        }, 1000)
       }
       
       return response

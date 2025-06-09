@@ -71,6 +71,15 @@
   margin: 0 0 5px 0;
 }
 
+.metadata {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
 .seller {
   font-size: 0.85rem;
   color: #888;

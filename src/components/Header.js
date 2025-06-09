@@ -6,10 +6,17 @@ import styles from '../styles/Header.module.css'
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [user, setUser] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
-    setIsLoggedIn(authService.isAuthenticated())
+    const authenticated = authService.isAuthenticated()
+    setIsLoggedIn(authenticated)
+    
+    if (authenticated) {
+      const currentUser = authService.getCurrentUser()
+      setUser(currentUser)
+    }
   }, [])
 
   const handleLogout = () => {
@@ -32,9 +39,19 @@ export default function Header() {
             홈
           </Link>
           {isLoggedIn && (
-            <Link href="/products/create" className={styles.navLink}>
-              상품 등록
-            </Link>
+            <>
+              <Link href="/products/create" className={styles.navLink}>
+                상품 등록
+              </Link>
+              <Link href="/analytics" className={styles.navLink}>
+                📊 분석
+              </Link>
+              {user?.email === 'admin@minicarrot.com' && (
+                <Link href="/user-management" className={styles.navLink}>
+                  👥 사용자 관리
+                </Link>
+              )}
+            </>
           )}
         </nav>
 

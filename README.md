@@ -10,9 +10,10 @@
 ## 🌟 주요 기능
 
 ### 👤 사용자 기능
-- ✅ **회원가입/로그인** - 이메일 기반 인증
-- ✅ **프로필 관리** - 닉네임, 개인정보 관리
+- ✅ **회원가입/로그인** - 이메일 기반 인증 + 자동 환영 알림
+- ✅ **프로필 관리** - 닉네임, 비밀번호 변경 + 실시간 알림
 - ✅ **마이페이지** - 내가 등록한 상품 / 구매한 상품 관리
+- 🆕 **사용자 관리** - 관리자 전용 사용자 검색/삭제 기능
 
 ### 🛍️ 상품 기능
 - ✅ **상품 등록** - 제목, 설명, 가격, 이미지 업로드, 카테고리 설정
@@ -20,12 +21,27 @@
 - ✅ **상품 목록 조회** - 카테고리별 필터링
 - ✅ **상품 상세 보기** - 상품 정보 확인 및 구매
 - ✅ **원클릭 구매** - 간편한 상품 구매
+- 🆕 **실시간 검색** - 키워드 + 카테고리 기반 상품 검색
+- 🆕 **실시간 조회수** - 상품별 조회수 실시간 표시
+
+### 📊 분석 및 통계
+- 🆕 **실시간 분석 대시보드** - 조회수, 활성 사용자, 거래 통계
+- 🆕 **인기 상품 순위** - 실시간 TOP 10 인기 상품
+- 🆕 **카테고리별 분석** - 카테고리별 상세 통계
+- 🆕 **사용자 행동 추적** - 상품 조회, 검색 패턴 분석
+
+### 🔔 실시간 알림
+- 🆕 **웹 푸시 알림** - 브라우저 알림 지원
+- 🆕 **자동 이벤트 알림** - 회원가입, 프로필 변경, 상품 판매 알림
+- 🆕 **실시간 업데이트** - Server-Sent Events 기반 실시간 데이터
 
 ### 📱 UI/UX
 - ✅ **반응형 디자인** - 모바일/태블릿/데스크톱 지원
 - ✅ **실시간 이미지 미리보기** - 업로드 전 이미지 확인
 - ✅ **직관적인 네비게이션** - 깔끔한 메뉴 구성
 - ✅ **로딩 상태 표시** - 사용자 경험 최적화
+- 🆕 **현대적인 글래스모피즘 디자인** - 블러 효과와 그라데이션
+- 🆕 **부드러운 애니메이션** - 마이크로 인터랙션 및 전환 효과
 
 ## 🚀 빠른 시작
 
@@ -69,10 +85,10 @@ NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://your-product-service-url
 
 # 예시 (로컬 개발)
 NEXT_PUBLIC_USER_SERVICE_URL=http://localhost:8080
-NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://localhost:8082
+NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://localhost:8081
 
 # 예시 (클라우드 배포)
-NEXT_PUBLIC_USER_SERVICE_URL=http://your-server-ip:31250
+NEXT_PUBLIC_USER_SERVICE_URL=http://your-server-ip:31207
 NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://your-server-ip:31251
 ```
 
@@ -80,11 +96,11 @@ NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://your-server-ip:31251
 
 이 프론트엔드는 다음 백엔드 서비스가 필요합니다:
 
-1. **User Service** (포트 8080 또는 31250)
+1. **User Service** (포트 8080 또는 31207)
    - 회원가입, 로그인, 프로필 관리
    - GitHub: [mini-carrot-user-service](https://github.com/YOUR_USERNAME/mini-carrot-user-service)
 
-2. **Product Service** (포트 8082 또는 31251)
+2. **Product Service** (포트 8081 또는 31251)
    - 상품 등록, 조회, 구매, 파일 업로드
    - GitHub: [mini-carrot-product-service](https://github.com/YOUR_USERNAME/mini-carrot-product-service)
 
@@ -162,7 +178,10 @@ kubectl logs -f deployment/frontend -n your-namespace
 │   │           └── 📄 [id].js   # 상품 수정
 │   ├── 📁 services/             # API 서비스 계층
 │   │   ├── 📄 authService.js    # 인증 관련 API
-│   │   └── 📄 productService.js # 상품 관련 API
+│   │   ├── 📄 productService.js # 상품 관련 API
+│   │   ├── 📄 analyticsService.js # 실시간 분석 API
+│   │   ├── 📄 userManagementService.js # 사용자 관리 API
+│   │   └── 📄 notificationService.js # 실시간 알림 서비스
 │   ├── 📁 utils/               # 유틸리티 함수
 │   │   └── 📄 api.js           # API 설정 및 헬퍼
 │   └── 📁 styles/              # CSS 모듈 스타일
@@ -177,13 +196,16 @@ kubectl logs -f deployment/frontend -n your-namespace
 
 | 📱 화면 | 🔗 경로 | 📝 설명 |
 |---------|---------|---------|
-| 메인 | `/` | 전체 상품 목록, 카테고리 필터링 |
+| 메인 | `/` | 전체 상품 목록, 실시간 검색, 카테고리 필터링 |
 | 로그인 | `/login` | 이메일/비밀번호 로그인 |
-| 회원가입 | `/register` | 새 계정 생성 |
-| 상품 상세 | `/products/[id]` | 상품 정보 보기 및 구매 |
+| 회원가입 | `/register` | 새 계정 생성 + 환영 알림 |
+| 상품 상세 | `/products/[id]` | 상품 정보 보기, 실시간 조회수, 구매 |
 | 상품 등록 | `/products/create` | 새 상품 등록 |
 | 상품 수정 | `/products/edit/[id]` | 내 상품 수정 |
-| 마이페이지 | `/mypage` | 내 상품/구매 상품 관리 |
+| 마이페이지 | `/mypage` | 내 상품/구매 상품 관리, 프로필 설정 |
+| 🆕 분석 대시보드 | `/analytics` | 실시간 통계, 인기 상품, 카테고리 분석 |
+| 🆕 사용자 관리 | `/user-management` | 관리자 전용 사용자 검색/삭제 |
+| 🆕 API 테스트 | `/test-api` | 백엔드 서비스 연결 테스트 |
 
 ## 🛠️ 개발 가이드
 

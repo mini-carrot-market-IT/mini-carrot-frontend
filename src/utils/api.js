@@ -1,6 +1,6 @@
 // API 기본 설정
 const USER_SERVICE_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:8080'
-const PRODUCT_SERVICE_URL = process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL || 'http://localhost:8082'
+const PRODUCT_SERVICE_URL = process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL || 'http://localhost:8081'
 
 // HTTP 요청을 위한 기본 함수
 async function request(baseUrl, url, options = {}) {

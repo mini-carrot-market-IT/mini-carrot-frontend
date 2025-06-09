@@ -71,7 +71,9 @@ docker run -d \
     --name ${SERVICE_NAME} \
     -p ${PORT}:3000 \
     -e NEXT_PUBLIC_USER_SERVICE_URL=http://localhost:8080 \
-    -e NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://localhost:8082 \
+    -e NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://localhost:8081 \
+    -e NEXT_PUBLIC_ENVIRONMENT=production \
+    -e NEXT_PUBLIC_APP_VERSION=2.0.0 \
     ${IMAGE_NAME}:${TAG}
 
 if [ $? -eq 0 ]; then

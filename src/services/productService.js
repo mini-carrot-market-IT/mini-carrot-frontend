@@ -1,4 +1,5 @@
 import { productApi } from '../utils/api'
+import { analyticsService } from './analyticsService'
 
 export const productService = {
   // 상품 목록 조회
@@ -19,10 +20,32 @@ export const productService = {
     try {
       const response = await productApi.get(`/api/products/${id}`)
       
+      // 조회 이벤트 추적 (비동기, 에러 무시)
+      if (response.success && response.data) {
+        analyticsService.trackProductView(id, response.data.category)
+      }
+      
       // Product Service 응답 구조: {success: true, data: product}
       return response.success ? response : response
     } catch (error) {
       throw new Error(error.message || '상품 정보를 가져오는데 실패했습니다.')
+    }
+  },
+
+  // 상품 검색
+  async searchProducts(keyword, category = 'all') {
+    try {
+      const url = `/api/products/search?keyword=${encodeURIComponent(keyword)}&category=${encodeURIComponent(category)}`
+      const response = await productApi.get(url)
+      
+      // 검색 이벤트 추적 (비동기, 에러 무시)
+      if (response.success && response.data) {
+        analyticsService.trackSearch(keyword, category, response.data.length)
+      }
+      
+      return response.success ? response : response
+    } catch (error) {
+      throw new Error(error.message || '상품 검색에 실패했습니다.')
     }
   },
 

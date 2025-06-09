@@ -1,0 +1,397 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.headerContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #ff6b35;
+}
+
+.nav {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav a {
+  text-decoration: none;
+  color: #666;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav a:hover {
+  color: #ff6b35;
+}
+
+.user {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.titleSection {
+  text-align: center;
+  margin-bottom: 3rem;
+  color: white;
+}
+
+.titleSection h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.titleSection p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem 2rem;
+  font-size: 1.2rem;
+  color: white;
+}
+
+.error {
+  background: rgba(255, 59, 59, 0.1);
+  border: 1px solid #ff3b3b;
+  color: #ff3b3b;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+/* 통계 카드 섹션 */
+.statsCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.statIcon {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  border-radius: 12px;
+  color: white;
+}
+
+.statContent h3 {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.statNumber {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 인기 상품 섹션 */
+.popularProducts {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.popularProducts h2 {
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.popularList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.popularItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+
+.popularItem:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.rank {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ff6b35;
+  min-width: 40px;
+}
+
+.productInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.productImage {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.productDetails h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.price {
+  margin: 0 0 0.25rem 0;
+  font-weight: bold;
+  color: #ff6b35;
+}
+
+.category {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.views {
+  font-size: 0.9rem;
+  color: #666;
+  min-width: 80px;
+  text-align: right;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #999;
+  font-size: 1.1rem;
+}
+
+/* 카테고리별 분석 섹션 */
+.categoryAnalysis {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.categoryAnalysis h2 {
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.categorySelector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.categoryButton {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 25px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.categoryButton:hover {
+  border-color: #ff6b35;
+  color: #ff6b35;
+}
+
+.categoryButton.active {
+  background: #ff6b35;
+  border-color: #ff6b35;
+  color: white;
+}
+
+.categoryStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.categoryStatItem {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.categoryStatItem h4 {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.categoryStatItem p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 실시간 활동 피드 */
+.activityFeed {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.activityFeed h2 {
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activityItem {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  align-items: center;
+}
+
+.activityTime {
+  font-size: 0.8rem;
+  color: #999;
+  min-width: 60px;
+}
+
+.activityText {
+  color: #333;
+}
+
+/* 조회수 업데이트 애니메이션 */
+@keyframes viewCountUpdate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); color: #ff6b35; }
+  100% { transform: scale(1); }
+}
+
+.view-count-updated {
+  animation: viewCountUpdate 0.3s ease-in-out;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .headerContent {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .nav {
+    gap: 1rem;
+  }
+
+  .main {
+    padding: 1rem;
+  }
+
+  .titleSection h1 {
+    font-size: 2rem;
+  }
+
+  .statsCards {
+    grid-template-columns: 1fr;
+  }
+
+  .popularItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .productInfo {
+    width: 100%;
+  }
+
+  .categorySelector {
+    justify-content: center;
+  }
+
+  .categoryStats {
+    grid-template-columns: 1fr;
+  }
+} 
