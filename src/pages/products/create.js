@@ -36,10 +36,10 @@ export default function CreateProduct() {
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      setFormData(prev => ({
-        ...prev,
+    setFormData(prev => ({
+      ...prev,
         imageFile: file
-      }))
+    }))
       
       // 이미지 미리보기
       const reader = new FileReader()

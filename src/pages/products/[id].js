@@ -26,7 +26,7 @@ export default function ProductDetail() {
   }, [id])
 
   const loadProduct = async () => {
-    try {
+        try {
       setLoading(true)
       const response = await productService.getProduct(id)
       
@@ -36,13 +36,13 @@ export default function ProductDetail() {
       } else {
         throw new Error('상품 정보를 불러올 수 없습니다.')
       }
-    } catch (error) {
+        } catch (error) {
       console.error('상품 로딩 실패:', error)
       setError(error.message)
     } finally {
-      setLoading(false)
-    }
-  }
+          setLoading(false)
+        }
+      }
 
   const handleBuy = async () => {
     if (!isAuthenticated) {

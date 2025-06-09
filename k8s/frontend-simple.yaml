@@ -4,9 +4,9 @@ metadata:
   name: frontend-config
   namespace: tuk-trainee12
 data:
-  USER_SERVICE_URL: "http://NODE_IP:31250"
+  USER_SERVICE_URL: "http://NODE_IP:31207"
   PRODUCT_SERVICE_URL: "http://NODE_IP:31251"
-  NODE_IP: "223.130.154.117"
+  NODE_IP: "211.188.63.186"
 
 ---
 apiVersion: apps/v1
@@ -26,15 +26,19 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: hwangsk0419/mini-carrot-frontend:clean-menu
+        image: hwangsk0419/mini-carrot-frontend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_USER_SERVICE_URL
-          value: "http://211.188.63.186:31250"
+          value: "http://211.188.63.186:31207"
         - name: NEXT_PUBLIC_PRODUCT_SERVICE_URL
           value: "http://211.188.63.186:31251"
+        - name: NEXT_PUBLIC_ENVIRONMENT
+          value: "production"
+        - name: NEXT_PUBLIC_APP_VERSION
+          value: "2.0.0"
         resources:
           requests:
             memory: "64Mi"
