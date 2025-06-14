@@ -13,25 +13,38 @@ export const analyticsService = {
 
       // 카테고리 매핑 (백엔드에서 지원하지 않는 카테고리를 지원하는 카테고리로 변환)
       const categoryMapping = {
-        '의류': '패션잡화',
-        '옷': '패션잡화',
-        '패션': '패션잡화',
-        '전자기기': '전자제품',
-        '가전': '전자제품',
-        '아기용품': '유아용품',
-        '베이비': '유아용품',
-        '운동': '스포츠용품',
-        '스포츠': '스포츠용품',
-        '음식': '식품',
-        '먹거리': '식품'
+        '의류': 'fashion',
+        '옷': 'fashion',
+        '패션': 'fashion',
+        '패션잡화': 'fashion',
+        '전자기기': 'electronics',
+        '전자제품': 'electronics',
+        '가전': 'electronics',
+        '아기용품': 'baby',
+        '유아용품': 'baby',
+        '베이비': 'baby',
+        '운동': 'sports',
+        '스포츠용품': 'sports',
+        '스포츠': 'sports',
+        '음식': 'food',
+        '식품': 'food',
+        '먹거리': 'food',
+        '신발': 'shoes',
+        '기타': 'other'
       }
 
-      const mappedCategory = categoryMapping[category] || category || '기타'
+      // 영어 카테고리로 매핑 (백엔드에서 한글 처리 문제 방지)
+      const mappedCategory = categoryMapping[category] || 'other'
       
-      console.log(`📊 상품 조회 추적: 상품 ${productId}, 카테고리 ${mappedCategory}`)
+      console.log(`📊 상품 조회 추적: 상품 ${productId}, 카테고리 ${category} -> ${mappedCategory}`)
       
-      const url = `/api/analytics/view/${productId}?category=${encodeURIComponent(mappedCategory)}&userId=${userId}`
-      const response = await productApi.post(url)
+      // POST 요청으로 JSON body 전송
+      const response = await productApi.post(`/api/analytics/view/${productId}`, {
+        category: mappedCategory,
+        userId: userId
+      })
+      
+      console.log('✅ 조회 추적 성공:', response)
       return response
     } catch (error) {
       // 분석 실패는 사용자 경험에 영향을 주지 않음
@@ -84,7 +97,18 @@ export const analyticsService = {
   async getViewCount(productId) {
     try {
       const response = await productApi.get(`/api/analytics/product/${productId}/views`)
-      return response.success ? response.data.viewCount : 0
+      console.log(`👁️ 조회수 조회: 상품 ${productId}`, response)
+      
+      // 응답 구조에 따라 조회수 추출
+      if (response && typeof response.viewCount === 'number') {
+        return response.viewCount
+      } else if (response && response.data && typeof response.data.viewCount === 'number') {
+        return response.data.viewCount
+      } else if (response && response.success && response.data && typeof response.data.viewCount === 'number') {
+        return response.data.viewCount
+      }
+      
+      return 0
     } catch (error) {
       console.warn('조회수 조회 실패:', error.message)
       return 0
