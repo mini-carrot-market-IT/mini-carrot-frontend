@@ -21,14 +21,6 @@ export default function Home() {
     loadProducts()
     loadPopularProducts()
     
-    // 웹 푸시 알림 권한 요청
-    notificationService.requestNotificationPermission()
-    
-    // 실시간 업데이트 연결
-    if (globalRealTimeUpdates) {
-      globalRealTimeUpdates.connect()
-    }
-
     // 실시간 상품 스트림 연결
     if (globalProductStream) {
       globalProductStream.connect()
@@ -49,9 +41,6 @@ export default function Home() {
     }
     
     return () => {
-      if (globalRealTimeUpdates) {
-        globalRealTimeUpdates.disconnect()
-      }
       if (globalProductStream) {
         globalProductStream.disconnect()
       }
@@ -132,12 +121,7 @@ export default function Home() {
       <div className={styles.container}>
         <div className={styles.hero}>
           <h1>🥕 Mini 당근마켓</h1>
-          <p>우리 동네 중고 직거래 마켓</p>
-          {productStreamConnected && (
-            <div className={styles.streamStatus}>
-              🔴 실시간 상품 업데이트 중 ({realtimeProducts.length}개)
-            </div>
-          )}
+          <p>우리 동네 중고 마켓</p>
         </div>
 
         {/* 검색 및 필터 섹션 */}

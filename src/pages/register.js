@@ -54,13 +54,13 @@ export default function Register() {
           {error && <div className={styles.error}>{error}</div>}
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
-              <label htmlFor="email">이메일</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
+            <label htmlFor="email">이메일</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
                 placeholder="이메일을 입력하세요"
                 required
               />
@@ -74,33 +74,33 @@ export default function Register() {
                 value={formData.nickname}
                 onChange={handleChange}
                 placeholder="닉네임을 입력하세요"
-                required
-              />
-            </div>
+              required
+            />
+          </div>
             <div className={styles.formGroup}>
-              <label htmlFor="password">비밀번호</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
+            <label htmlFor="password">비밀번호</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
                 placeholder="비밀번호를 입력하세요"
-                required
-              />
-            </div>
+              required
+            />
+          </div>
             <div className={styles.formGroup}>
-              <label htmlFor="confirmPassword">비밀번호 확인</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
+            <label htmlFor="confirmPassword">비밀번호 확인</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
                 placeholder="비밀번호를 다시 입력하세요"
-                required
-              />
-            </div>
+              required
+            />
+          </div>
             <button 
               type="submit" 
               disabled={loading}
@@ -108,7 +108,7 @@ export default function Register() {
             >
               {loading ? '가입 중...' : '회원가입'}
             </button>
-          </form>
+        </form>
           <p className={styles.linkText}>
             이미 계정이 있으신가요? <a href="/login">로그인</a>
           </p>

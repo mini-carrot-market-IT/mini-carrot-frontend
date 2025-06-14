@@ -138,17 +138,6 @@ export default function Analytics() {
         <div className={styles.titleSection}>
           <h1>📊 실시간 분석 대시보드</h1>
           <p>미니 당근의 실시간 통계를 확인하세요</p>
-          <div className={styles.connectionStatusGroup}>
-            <div className={`${styles.connectionStatus} ${isConnected ? styles.connected : styles.disconnected}`}>
-              {isConnected ? '🟢 Analytics SSE 연결됨' : '🔴 Analytics SSE 연결 끊김'}
-            </div>
-            <div className={`${styles.connectionStatus} ${productStreamConnected ? styles.connected : styles.disconnected}`}>
-              {productStreamConnected ? '🟢 Product Stream 연결됨' : '🔴 Product Stream 연결 끊김'}
-            </div>
-            <div className={`${styles.connectionStatus} ${userSSEConnected ? styles.connected : styles.disconnected}`}>
-              {userSSEConnected ? '🟢 User SSE 연결됨' : '🔴 User SSE 연결 끊김'}
-            </div>
-          </div>
         </div>
 
         {error && (
@@ -165,16 +154,6 @@ export default function Analytics() {
               <h3>총 조회수</h3>
               <p className={styles.statNumber}>
                 {(realTimeStats.totalViews || dashboardStats.totalViews || 0).toLocaleString()}
-              </p>
-            </div>
-          </div>
-
-          <div className={styles.statCard}>
-            <div className={styles.statIcon}>🔍</div>
-            <div className={styles.statContent}>
-              <h3>총 검색 수</h3>
-              <p className={styles.statNumber}>
-                {(realTimeStats.totalSearches || dashboardStats.totalSearches || 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -295,25 +274,6 @@ export default function Analytics() {
         {/* User SSE 실시간 알림 테스트 섹션 */}
         <section className={styles.userNotifications}>
           <h2>🔔 실시간 사용자 알림</h2>
-          <div className={styles.notificationStatus}>
-            <div className={`${styles.connectionStatus} ${userSSEConnected ? styles.connected : styles.disconnected}`}>
-              {userSSEConnected ? '🟢 User SSE 연결됨' : '🔴 User SSE 연결 끊김'}
-            </div>
-            <button 
-              className={styles.testButton}
-              onClick={sendTestNotification}
-              disabled={!userSSEConnected}
-            >
-              🧪 테스트 알림 보내기
-            </button>
-            <button 
-              className={styles.clearButton}
-              onClick={clearNotifications}
-            >
-              🗑️ 알림 지우기
-            </button>
-          </div>
-          
           <div className={styles.notificationList}>
             {userNotifications.length > 0 ? (
               userNotifications.slice(-3).reverse().map((notification) => (
@@ -336,7 +296,6 @@ export default function Analytics() {
             )}
           </div>
         </section>
-
 
       </main>
     </div>

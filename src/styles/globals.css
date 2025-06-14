@@ -20,11 +20,29 @@ body {
 a, a:hover, a:focus, a:active, a:visited {
   color: inherit;
   text-decoration: none !important;
+  border-bottom: none !important;
+  text-underline-offset: unset !important;
 }
 
 /* 모든 텍스트에서 밑줄 제거 */
 *, *:before, *:after {
   text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* Next.js Link 컴포넌트 밑줄 제거 */
+[data-nextjs-link] {
+  text-decoration: none !important;
+}
+
+/* 상품 카드 내 모든 링크 밑줄 제거 */
+.product-card a,
+.product-card a:hover,
+.product-card a:focus,
+.product-card a:active,
+.product-card a:visited {
+  text-decoration: none !important;
+  border-bottom: none !important;
 }
 
 /* 레이아웃 */

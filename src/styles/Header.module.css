@@ -25,6 +25,10 @@
   transition: color 0.2s;
 }
 
+.logo a {
+  text-decoration: none;
+}
+
 .logo h1:hover {
   color: #c0392b;
 }

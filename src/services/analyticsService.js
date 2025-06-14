@@ -85,7 +85,6 @@ export const analyticsService = {
       return {
         totalProducts: response.totalProducts || 0,
         totalViews: response.totalViews || 0,
-        totalSearches: response.totalSearches || 0,
         categoryStats: response.categoryStats || {},
         topKeywords: response.topKeywords || [],
         message: response.message || '',
@@ -96,7 +95,6 @@ export const analyticsService = {
       return {
         totalProducts: 0,
         totalViews: 0,
-        totalSearches: 0,
         categoryStats: {},
         topKeywords: [],
         message: '',
