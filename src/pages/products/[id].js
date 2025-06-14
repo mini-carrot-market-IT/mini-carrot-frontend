@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { productService } from '../../services/productService'
 import { authService } from '../../services/authService'
-import { analyticsService } from '../../services/analyticsService'
 import { apiUtils } from '../../utils/api'
 import Layout from '../../components/Layout'
 import styles from '../../styles/ProductDetail.module.css'
@@ -15,7 +14,6 @@ export default function ProductDetail() {
   const [error, setError] = useState('')
   const [purchasing, setPurchasing] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [viewCount, setViewCount] = useState(0)
 
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated())
@@ -37,15 +35,6 @@ export default function ProductDetail() {
       // Product Service 응답 구조: {success: true, data: product}
       if (response.success && response.data) {
         setProduct(response.data)
-        
-        // 조회수 가져오기
-        try {
-          const count = await analyticsService.getViewCount(id)
-          setViewCount(count)
-        } catch (error) {
-          console.warn('조회수 조회 실패:', error)
-          setViewCount(0)
-        }
       } else {
         throw new Error('상품 정보를 불러올 수 없습니다.')
       }
@@ -146,7 +135,7 @@ export default function ProductDetail() {
             <div className={styles.meta}>
               <p>판매자: {product.sellerNickname}</p>
               <p>카테고리: {product.category}</p>
-              <p className={styles.viewCount}>👁️ 조회수: {viewCount.toLocaleString()}</p>
+              <p className={styles.viewCount}>👁️ 조회수: {product.viewCount?.toLocaleString() || 0}</p>
             </div>
 
             <div className={styles.actions}>

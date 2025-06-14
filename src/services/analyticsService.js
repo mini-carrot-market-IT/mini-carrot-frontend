@@ -2,58 +2,7 @@ import { productApi } from '../utils/api'
 import { authService } from './authService'
 
 export const analyticsService = {
-  // 상품 조회 추적
-  async trackProductView(productId, category = '', userId = null) {
-    try {
-      // 사용자 ID가 없으면 현재 로그인된 사용자 정보 사용
-      if (!userId) {
-        const currentUser = authService.getCurrentUser()
-        userId = currentUser?.id || 'anonymous'
-      }
-
-      // 카테고리 매핑 (백엔드에서 지원하지 않는 카테고리를 지원하는 카테고리로 변환)
-      const categoryMapping = {
-        '의류': 'fashion',
-        '옷': 'fashion',
-        '패션': 'fashion',
-        '패션잡화': 'fashion',
-        '전자기기': 'electronics',
-        '전자제품': 'electronics',
-        '가전': 'electronics',
-        '아기용품': 'baby',
-        '유아용품': 'baby',
-        '베이비': 'baby',
-        '운동': 'sports',
-        '스포츠용품': 'sports',
-        '스포츠': 'sports',
-        '음식': 'food',
-        '식품': 'food',
-        '먹거리': 'food',
-        '신발': 'shoes',
-        '기타': 'other'
-      }
-
-      // 영어 카테고리로 매핑 (백엔드에서 한글 처리 문제 방지)
-      const mappedCategory = categoryMapping[category] || 'other'
-      
-      console.log(`📊 상품 조회 추적: 상품 ${productId}, 카테고리 ${category} -> ${mappedCategory}`)
-      
-      // POST 요청으로 JSON body 전송
-      const response = await productApi.post(`/api/analytics/view/${productId}`, {
-        category: mappedCategory,
-        userId: userId
-      })
-      
-      console.log('✅ 조회 추적 성공:', response)
-      return response
-    } catch (error) {
-      // 분석 실패는 사용자 경험에 영향을 주지 않음
-      console.warn('조회 추적 실패:', error.message)
-      return null
-    }
-  },
-
-  // 검색 추적 (수정됨: POST 요청으로 변경)
+  // 검색 추적
   async trackSearch(keyword, category = 'all', resultCount = 0, userId = null) {
     try {
       if (!userId) {
@@ -93,40 +42,10 @@ export const analyticsService = {
     }
   },
 
-  // 실시간 조회수 가져오기
-  async getViewCount(productId) {
-    try {
-      console.log(`🔍 조회수 API 호출 시작: 상품 ${productId}`);
-      const response = await productApi.get(`/api/analytics/product/${productId}/views`)
-      console.log(`👁️ 조회수 조회 원본 응답: 상품 ${productId}`, response)
-      
-      // API 응답 구조: {"productId": 59, "viewCount": 4}
-      if (response && typeof response.viewCount === 'number') {
-        console.log(`✅ 조회수 파싱 성공: ${response.viewCount}`)
-        return response.viewCount
-      } else if (response && response.data && typeof response.data.viewCount === 'number') {
-        console.log(`✅ 조회수 파싱 성공 (data): ${response.data.viewCount}`)
-        return response.data.viewCount
-      } else if (response && response.success && response.data && typeof response.data.viewCount === 'number') {
-        console.log(`✅ 조회수 파싱 성공 (success.data): ${response.data.viewCount}`)
-        return response.data.viewCount
-      }
-      
-      console.warn(`⚠️ 조회수 파싱 실패, 응답 구조:`, response)
-      console.warn(`⚠️ 응답 타입: ${typeof response}, viewCount 타입: ${typeof response?.viewCount}`)
-      return 0
-    } catch (error) {
-      console.error(`❌ 조회수 조회 실패 (상품 ${productId}):`, error.message)
-      console.error(`❌ 전체 에러 객체:`, error)
-      return 0
-    }
-  },
-
-  // 인기 상품 순위 (새로운 API 사용)
+  // 인기 상품 순위
   async getPopularProducts(limit = 10) {
     try {
       const response = await productApi.get(`/api/products/popular?limit=${limit}`)
-      // 새로운 응답 구조: {success: true, data: products}
       return response.success ? response.data : []
     } catch (error) {
       console.error('인기 상품 조회 실패:', error.message)
@@ -134,7 +53,7 @@ export const analyticsService = {
     }
   },
 
-  // 상품 대시보드 통계 (새로운 API)
+  // 상품 대시보드 통계
   async getProductDashboard() {
     try {
       const response = await productApi.get('/api/products/dashboard')
@@ -159,22 +78,10 @@ export const analyticsService = {
     }
   },
 
-  // 카테고리별 통계
-  async getCategoryStats(category) {
-    try {
-      const response = await productApi.get(`/api/analytics/category/${category}/stats`)
-      return response.success ? response.data : {}
-    } catch (error) {
-      console.error('카테고리 통계 조회 실패:', error.message)
-      return {}
-    }
-  },
-
-  // Analytics 대시보드 데이터 (수정됨)
+  // Analytics 대시보드 데이터
   async getDashboardStats() {
     try {
       const response = await productApi.get('/api/analytics/dashboard')
-      // 새로운 백엔드 응답 형식에 따라 수정
       return {
         totalProducts: response.totalProducts || 0,
         totalViews: response.totalViews || 0,
@@ -204,151 +111,170 @@ export const analyticsService = {
       const response = await productApi.post('/api/analytics/batch', { events })
       return response
     } catch (error) {
-      console.warn('배치 이벤트 전송 실패:', error.message)
+      console.error('배치 이벤트 전송 실패:', error.message)
       return null
     }
   }
 }
 
-// 실시간 상품 스트림 SSE 클래스 (새로운 기능)
+// 실시간 상품 스트림 (SSE)
 export class ProductStreamSSE {
   constructor() {
     this.eventSource = null
-    this.listeners = new Map()
-    this.isConnected = false
+    this.listeners = {}
+    this.reconnectAttempts = 0
+    this.maxReconnectAttempts = 5
+    this.reconnectDelay = 1000
   }
 
-  // 실시간 상품 스트림 연결
   connect() {
-    if (this.eventSource) {
-      this.disconnect()
-    }
-
     try {
-      this.eventSource = new EventSource('http://211.188.63.186:31251/api/stream/products')
+      const PRODUCT_SERVICE_URL = process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL || 'http://211.188.63.186:31251'
+      this.eventSource = new EventSource(`${PRODUCT_SERVICE_URL}/api/products/stream`)
       
       this.eventSource.onopen = () => {
         console.log('🟢 실시간 상품 스트림 연결됨')
-        this.isConnected = true
-        this.emit('connected')
+        this.reconnectAttempts = 0
+        this.emit('connected', { status: 'connected' })
       }
 
       this.eventSource.onmessage = (event) => {
         try {
-          const products = JSON.parse(event.data)
-          console.log('📦 실시간 상품 데이터:', products)
-          this.emit('products', products)
+          const data = JSON.parse(event.data)
+          console.log('📦 상품 업데이트:', data)
+          this.emit('product-update', data)
         } catch (error) {
-          console.error('상품 스트림 데이터 파싱 오류:', error)
+          console.warn('상품 스트림 데이터 파싱 실패:', error)
         }
       }
 
       this.eventSource.onerror = (error) => {
-        console.error('❌ 상품 스트림 연결 오류:', error)
-        this.isConnected = false
+        console.error('❌ 상품 스트림 오류:', error)
         this.emit('error', error)
+        
+        if (this.eventSource.readyState === EventSource.CLOSED) {
+          this.handleReconnect()
+        }
       }
+
+      // 특정 이벤트 타입 리스너
+      this.eventSource.addEventListener('product-created', (event) => {
+        const data = JSON.parse(event.data)
+        this.emit('product-created', data)
+      })
+
+      this.eventSource.addEventListener('product-updated', (event) => {
+        const data = JSON.parse(event.data)
+        this.emit('product-updated', data)
+      })
 
     } catch (error) {
       console.error('상품 스트림 연결 실패:', error)
+      this.handleReconnect()
     }
   }
 
-  // 연결 해제
   disconnect() {
+    console.log('상품 스트림 연결 해제됨')
     if (this.eventSource) {
       this.eventSource.close()
       this.eventSource = null
-      this.isConnected = false
-      console.log('상품 스트림 연결 해제됨')
     }
+    this.listeners = {}
+    this.reconnectAttempts = 0
   }
 
-  // 이벤트 리스너 추가
   addEventListener(eventType, callback) {
-    if (!this.listeners.has(eventType)) {
-      this.listeners.set(eventType, [])
+    if (!this.listeners[eventType]) {
+      this.listeners[eventType] = []
     }
-    this.listeners.get(eventType).push(callback)
+    this.listeners[eventType].push(callback)
   }
 
-  // 이벤트 리스너 제거
   removeEventListener(eventType, callback) {
-    if (this.listeners.has(eventType)) {
-      const callbacks = this.listeners.get(eventType)
-      const index = callbacks.indexOf(callback)
-      if (index > -1) {
-        callbacks.splice(index, 1)
-      }
+    if (this.listeners[eventType]) {
+      this.listeners[eventType] = this.listeners[eventType].filter(cb => cb !== callback)
     }
   }
 
-  // 이벤트 발생
   emit(eventType, data) {
-    if (this.listeners.has(eventType)) {
-      this.listeners.get(eventType).forEach(callback => {
+    if (this.listeners[eventType]) {
+      this.listeners[eventType].forEach(callback => {
         try {
           callback(data)
         } catch (error) {
-          console.error(`상품 스트림 이벤트 처리 오류 (${eventType}):`, error)
+          console.error(`이벤트 리스너 실행 실패 (${eventType}):`, error)
         }
       })
     }
   }
+
+  handleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++
+      console.log(`🔄 상품 스트림 재연결 시도 ${this.reconnectAttempts}/${this.maxReconnectAttempts}`)
+      
+      setTimeout(() => {
+        this.connect()
+      }, this.reconnectDelay * this.reconnectAttempts)
+    } else {
+      console.error('❌ 상품 스트림 재연결 포기')
+      this.emit('reconnect-failed', { attempts: this.reconnectAttempts })
+    }
+  }
 }
 
-// 분석 이벤트 배치 처리 클래스
+// Analytics 추적기 (배치 처리용)
 export class AnalyticsTracker {
   constructor() {
-    this.eventQueue = []
+    this.events = []
     this.batchSize = 10
-    this.flushInterval = 5000 // 5초
-    
-    // 주기적으로 배치 전송
-    if (typeof window !== 'undefined') {
-      this.intervalId = setInterval(() => this.flush(), this.flushInterval)
-      
-      // 페이지 종료 시 남은 이벤트 전송
-      window.addEventListener('beforeunload', () => this.flush())
-    }
+    this.flushInterval = 30000 // 30초
+    this.timer = null
+    this.startBatchTimer()
   }
 
   track(eventType, data) {
-    this.eventQueue.push({
-      eventType,
+    this.events.push({
+      type: eventType,
       data,
       timestamp: Date.now()
     })
 
-    // 큐가 가득 차면 즉시 전송
-    if (this.eventQueue.length >= this.batchSize) {
+    if (this.events.length >= this.batchSize) {
       this.flush()
     }
   }
 
   async flush() {
-    if (this.eventQueue.length === 0) return
+    if (this.events.length === 0) return
 
-    const events = [...this.eventQueue]
-    this.eventQueue = []
+    const eventsToSend = [...this.events]
+    this.events = []
 
     try {
-      await analyticsService.sendBatchEvents(events)
+      await analyticsService.sendBatchEvents(eventsToSend)
+      console.log(`📊 Analytics 이벤트 ${eventsToSend.length}개 전송 완료`)
     } catch (error) {
-      console.warn('배치 이벤트 전송 실패:', error.message)
-      // 실패한 이벤트를 다시 큐에 추가 (선택사항)
-      // this.eventQueue.unshift(...events)
+      console.error('Analytics 이벤트 전송 실패:', error)
+      // 실패한 이벤트를 다시 큐에 추가 (최대 재시도 방지)
+      if (eventsToSend.length < 100) {
+        this.events.unshift(...eventsToSend)
+      }
     }
+  }
+
+  startBatchTimer() {
+    this.timer = setInterval(() => {
+      this.flush()
+    }, this.flushInterval)
   }
 
   destroy() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId)
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
     }
-    this.flush()
+    this.flush() // 마지막 이벤트들 전송
   }
-}
-
-// 전역 인스턴스들
-export const globalAnalytics = typeof window !== 'undefined' ? new AnalyticsTracker() : null
-export const globalProductStream = typeof window !== 'undefined' ? new ProductStreamSSE() : null 
+} 
