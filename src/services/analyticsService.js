@@ -99,15 +99,19 @@ export const analyticsService = {
       const response = await productApi.get(`/api/analytics/product/${productId}/views`)
       console.log(`👁️ 조회수 조회: 상품 ${productId}`, response)
       
-      // 응답 구조에 따라 조회수 추출
+      // API 응답 구조: {"productId": 59, "viewCount": 4}
       if (response && typeof response.viewCount === 'number') {
+        console.log(`✅ 조회수 파싱 성공: ${response.viewCount}`)
         return response.viewCount
       } else if (response && response.data && typeof response.data.viewCount === 'number') {
+        console.log(`✅ 조회수 파싱 성공 (data): ${response.data.viewCount}`)
         return response.data.viewCount
       } else if (response && response.success && response.data && typeof response.data.viewCount === 'number') {
+        console.log(`✅ 조회수 파싱 성공 (success.data): ${response.data.viewCount}`)
         return response.data.viewCount
       }
       
+      console.warn(`⚠️ 조회수 파싱 실패, 응답 구조:`, response)
       return 0
     } catch (error) {
       console.warn('조회수 조회 실패:', error.message)
