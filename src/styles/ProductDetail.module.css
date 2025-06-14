@@ -67,6 +67,14 @@
   font-size: 0.95rem;
 }
 
+.viewCount {
+  color: #3498db !important;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .actions {
   display: flex;
   gap: 15px;

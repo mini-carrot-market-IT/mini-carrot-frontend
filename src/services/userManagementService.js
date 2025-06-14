@@ -31,10 +31,12 @@ export const userManagementService = {
     }
   },
 
-  // 닉네임 변경
+  // 닉네임 변경 (새로운 JSON body 방식)
   async changeNickname(newNickname) {
     try {
-      const response = await userApi.put(`/api/users/nickname?newNickname=${encodeURIComponent(newNickname)}`)
+      const response = await userApi.put('/api/users/nickname', {
+        newNickname: newNickname
+      })
       
       // 성공 시 로컬 스토리지의 사용자 정보 업데이트
       if (response.success && response.data && typeof window !== 'undefined') {
@@ -47,7 +49,7 @@ export const userManagementService = {
     }
   },
 
-  // 비밀번호 변경
+  // 비밀번호 변경 (JSON body 방식 유지)
   async changePassword(currentPassword, newPassword) {
     try {
       const response = await userApi.put('/api/users/password', {
@@ -57,6 +59,85 @@ export const userManagementService = {
       return response.success ? response : response
     } catch (error) {
       throw new Error(error.message || '비밀번호 변경에 실패했습니다.')
+    }
+  },
+
+  // 사용자 대시보드 (새로운 API)
+  async getUserDashboard() {
+    try {
+      const response = await userApi.get('/api/users/dashboard')
+      return response.success ? response : response
+    } catch (error) {
+      console.error('사용자 대시보드 조회 실패:', error.message)
+      // 백엔드 구현 전까지 기본값 반환
+      return {
+        success: true,
+        data: {
+          profile: {
+            userId: null,
+            email: '',
+            nickname: ''
+          },
+          stats: {
+            registeredProducts: 0,
+            purchasedProducts: 0,
+            likedProducts: 0,
+            totalTransactions: 0
+          },
+          recentActivity: []
+        }
+      }
+    }
+  },
+
+  // 내가 등록한 상품 (새로운 API)
+  async getMyProducts() {
+    try {
+      const response = await userApi.get('/api/users/products/mine')
+      return response.success ? response : response
+    } catch (error) {
+      console.error('내 상품 목록 조회 실패:', error.message)
+      return {
+        success: true,
+        data: {
+          message: "Product Service와 연동이 필요합니다.",
+          products: []
+        }
+      }
+    }
+  },
+
+  // 구매한 상품 (새로운 API)
+  async getPurchasedProducts() {
+    try {
+      const response = await userApi.get('/api/users/products/purchased')
+      return response.success ? response : response
+    } catch (error) {
+      console.error('구매한 상품 목록 조회 실패:', error.message)
+      return {
+        success: true,
+        data: {
+          message: "Product Service와 연동이 필요합니다.",
+          products: []
+        }
+      }
+    }
+  },
+
+  // 찜한 상품 (새로운 API)
+  async getLikedProducts() {
+    try {
+      const response = await userApi.get('/api/users/products/liked')
+      return response.success ? response : response
+    } catch (error) {
+      console.error('찜한 상품 목록 조회 실패:', error.message)
+      return {
+        success: true,
+        data: {
+          message: "Product Service와 연동이 필요합니다.",
+          products: []
+        }
+      }
     }
   },
 

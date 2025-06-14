@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { productService } from '../services/productService'
-import { analyticsService } from '../services/analyticsService'
+import { analyticsService, globalProductStream } from '../services/analyticsService'
 import { globalRealTimeUpdates, notificationService } from '../services/notificationService'
 import ProductCard from '../components/ProductCard'
 import Layout from '../components/Layout'
@@ -8,14 +8,18 @@ import styles from '../styles/Home.module.css'
 
 export default function Home() {
   const [products, setProducts] = useState([])
+  const [popularProducts, setPopularProducts] = useState([])
+  const [realtimeProducts, setRealtimeProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [isSearching, setIsSearching] = useState(false)
+  const [productStreamConnected, setProductStreamConnected] = useState(false)
 
   useEffect(() => {
     loadProducts()
+    loadPopularProducts()
     
     // 웹 푸시 알림 권한 요청
     notificationService.requestNotificationPermission()
@@ -24,10 +28,32 @@ export default function Home() {
     if (globalRealTimeUpdates) {
       globalRealTimeUpdates.connect()
     }
+
+    // 실시간 상품 스트림 연결
+    if (globalProductStream) {
+      globalProductStream.connect()
+      
+      globalProductStream.addEventListener('connected', () => {
+        setProductStreamConnected(true)
+        console.log('🟢 메인 페이지: 상품 스트림 연결됨')
+      })
+      
+      globalProductStream.addEventListener('products', (products) => {
+        setRealtimeProducts(products)
+        console.log('📦 메인 페이지: 실시간 상품 업데이트', products.length, '개')
+      })
+      
+      globalProductStream.addEventListener('error', () => {
+        setProductStreamConnected(false)
+      })
+    }
     
     return () => {
       if (globalRealTimeUpdates) {
         globalRealTimeUpdates.disconnect()
+      }
+      if (globalProductStream) {
+        globalProductStream.disconnect()
       }
     }
   }, [])
@@ -55,6 +81,15 @@ export default function Home() {
     }
   }
 
+  const loadPopularProducts = async () => {
+    try {
+      const popular = await analyticsService.getPopularProducts(6)
+      setPopularProducts(popular)
+    } catch (error) {
+      console.error('인기 상품 로딩 실패:', error)
+    }
+  }
+
   const handleSearch = async (e) => {
     e.preventDefault()
     if (!searchKeyword.trim()) {
@@ -65,13 +100,12 @@ export default function Home() {
     try {
       setIsSearching(true)
       setError('')
-      const response = await productService.searchProducts(searchKeyword, selectedCategory)
       
-      const productList = response.success && response.data ? response.data : []
-      setProducts(productList)
+      const results = await productService.searchProducts(searchKeyword, selectedCategory)
+      setProducts(results || [])
     } catch (error) {
-      console.error('상품 검색 실패:', error)
-      setError(`상품 검색에 실패했습니다: ${error.message}`)
+      console.error('검색 실패:', error)
+      setError(`검색에 실패했습니다: ${error.message}`)
     } finally {
       setIsSearching(false)
     }
@@ -79,80 +113,137 @@ export default function Home() {
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category)
-    setSearchKeyword('')
+    setSearchKeyword('') // 검색어 초기화
     loadProducts(category === 'all' ? '' : category)
-  }
-
-  if (loading) return <Layout><div className={styles.loading}>로딩 중...</div></Layout>
-  
-  if (error) {
-    return (
-      <Layout>
-        <div className={styles.container}>
-          <div className={styles.error}>
-            <h2>⚠️ 오류 발생</h2>
-            <p>{error}</p>
-            <button onClick={loadProducts} className={styles.retryButton}>
-              다시 시도
-            </button>
-          </div>
-        </div>
-      </Layout>
-    )
   }
 
   const categories = [
     { value: 'all', label: '전체' },
-    { value: 'electronics', label: '전자제품' },
-    { value: 'fashion', label: '패션' },
-    { value: 'home', label: '생활용품' },
-    { value: 'books', label: '도서' },
-    { value: 'sports', label: '스포츠' }
+    { value: '전자제품', label: '전자제품' },
+    { value: '패션잡화', label: '패션잡화' },
+    { value: '유아용품', label: '유아용품' },
+    { value: '스포츠용품', label: '스포츠용품' },
+    { value: '식품', label: '식품' },
+    { value: '신발', label: '신발' }
   ]
 
   return (
     <Layout>
       <div className={styles.container}>
-        <h1 className={styles.title}>🥕 Mini 당근마켓</h1>
-        
-        {/* 검색 및 카테고리 섹션 */}
+        <div className={styles.hero}>
+          <h1>🥕 Mini 당근마켓</h1>
+          <p>우리 동네 중고 직거래 마켓</p>
+          {productStreamConnected && (
+            <div className={styles.streamStatus}>
+              🔴 실시간 상품 업데이트 중 ({realtimeProducts.length}개)
+            </div>
+          )}
+        </div>
+
+        {/* 검색 및 필터 섹션 */}
         <div className={styles.searchSection}>
           <form onSubmit={handleSearch} className={styles.searchForm}>
             <input
               type="text"
+              placeholder="상품을 검색해보세요..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="상품을 검색하세요..."
               className={styles.searchInput}
             />
-            <select 
-              value={selectedCategory} 
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className={styles.categorySelect}
+            <button 
+              type="submit" 
+              className={styles.searchButton}
+              disabled={isSearching}
             >
-              {categories.map(category => (
-                <option key={category.value} value={category.value}>
-                  {category.label}
-                </option>
-              ))}
-            </select>
-            <button type="submit" className={styles.searchButton} disabled={isSearching}>
-              {isSearching ? '검색중...' : '🔍 검색'}
+              {isSearching ? '검색 중...' : '🔍 검색'}
             </button>
           </form>
+
+          <div className={styles.categoryFilter}>
+            {categories.map(category => (
+              <button
+                key={category.value}
+                className={`${styles.categoryButton} ${
+                  selectedCategory === category.value ? styles.active : ''
+                }`}
+                onClick={() => handleCategoryChange(category.value)}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className={styles.productsGrid}>
-          {products.length === 0 ? (
-            <div className={styles.empty}>
-              {searchKeyword ? '검색 결과가 없습니다.' : '등록된 상품이 없습니다.'}
+        {/* 인기 상품 섹션 */}
+        {popularProducts.length > 0 && (
+          <section className={styles.popularSection}>
+            <h2>🔥 인기 상품</h2>
+            <div className={styles.popularGrid}>
+              {popularProducts.map(product => (
+                <ProductCard key={product.productId} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 실시간 상품 스트림 섹션 */}
+        {productStreamConnected && realtimeProducts.length > 0 && (
+          <section className={styles.realtimeSection}>
+            <h2>🔴 실시간 업데이트 상품</h2>
+            <p className={styles.realtimeDescription}>
+              지금 이 순간 업데이트된 최신 상품들을 확인하세요!
+            </p>
+            <div className={styles.realtimeGrid}>
+              {realtimeProducts.slice(0, 8).map(product => (
+                <ProductCard key={`realtime-${product.productId}`} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 에러 메시지 */}
+        {error && (
+          <div className={styles.error}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* 상품 목록 섹션 */}
+        <section className={styles.productsSection}>
+          <div className={styles.sectionHeader}>
+            <h2>
+              {searchKeyword ? `"${searchKeyword}" 검색 결과` : 
+               selectedCategory === 'all' ? '전체 상품' : `${selectedCategory} 상품`}
+            </h2>
+            <span className={styles.productCount}>
+              {products.length}개의 상품
+            </span>
+          </div>
+
+          {loading ? (
+            <div className={styles.loading}>
+              <div className={styles.spinner}></div>
+              <p>상품을 불러오는 중...</p>
+            </div>
+          ) : products.length > 0 ? (
+            <div className={styles.productGrid}>
+              {products.map(product => (
+                <ProductCard key={product.productId} product={product} />
+              ))}
             </div>
           ) : (
-            products.map(product => (
-              <ProductCard key={product.productId} product={product} />
-            ))
+            <div className={styles.emptyState}>
+              <div className={styles.emptyIcon}>📦</div>
+              <h3>상품이 없습니다</h3>
+              <p>
+                {searchKeyword 
+                  ? '검색 조건에 맞는 상품이 없습니다. 다른 키워드로 검색해보세요.'
+                  : '아직 등록된 상품이 없습니다. 첫 번째 상품을 등록해보세요!'
+                }
+              </p>
+            </div>
           )}
-        </div>
+        </section>
       </div>
     </Layout>
   )

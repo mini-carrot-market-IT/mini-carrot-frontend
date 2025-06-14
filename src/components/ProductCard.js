@@ -16,6 +16,33 @@ export default function ProductCard({ product, isPurchased = false }) {
     }
   }, [product?.productId])
 
+  // 상품 클릭 시 조회수 증가
+  const handleProductClick = async () => {
+    if (product?.productId) {
+      try {
+        // 조회수 즉시 증가 (UI 반응성)
+        setViewCount(prev => prev + 1)
+        
+        // 백엔드에 조회 추적
+        await analyticsService.trackProductView(product.productId, product.category)
+        
+        // 실제 조회수 다시 가져오기 (정확성 보장)
+        setTimeout(async () => {
+          try {
+            const actualCount = await analyticsService.getViewCount(product.productId)
+            setViewCount(actualCount)
+          } catch (error) {
+            console.warn('조회수 재조회 실패:', error)
+          }
+        }, 1000)
+      } catch (error) {
+        console.warn('조회 추적 실패:', error)
+        // 실패시 증가된 조회수를 원래대로
+        setViewCount(prev => Math.max(0, prev - 1))
+      }
+    }
+  }
+
   if (!product) return null
 
   return (
@@ -23,7 +50,7 @@ export default function ProductCard({ product, isPurchased = false }) {
       className={`${styles.productCard} ${product.status === 'SOLD' ? styles.sold : ''}`}
       data-product-id={product.productId}
     >
-      <Link href={`/products/${product.productId}`}>
+      <Link href={`/products/${product.productId}`} onClick={handleProductClick}>
         <div className={styles.productImage}>
           <img 
             src={apiUtils.getImageUrl(product.imageUrl)} 

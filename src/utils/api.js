@@ -1,6 +1,6 @@
 // API 기본 설정
-const USER_SERVICE_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:8080'
-const PRODUCT_SERVICE_URL = process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL || 'http://localhost:8081'
+const USER_SERVICE_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://211.188.63.186:31207'
+const PRODUCT_SERVICE_URL = process.env.NEXT_PUBLIC_PRODUCT_SERVICE_URL || 'http://211.188.63.186:31251'
 
 // HTTP 요청을 위한 기본 함수
 async function request(baseUrl, url, options = {}) {
@@ -40,9 +40,17 @@ async function request(baseUrl, url, options = {}) {
     console.error('API 요청 실패:', error)
     
     // 연결 오류인 경우 더 구체적인 메시지 제공
-    if (error.message.includes('Failed to fetch') || error.message.includes('ERR_FAILED')) {
-      const serviceName = baseUrl.includes('8080') ? 'User Service' : 'Product Service'
+    if (error.message.includes('Failed to fetch') || 
+        error.message.includes('ERR_FAILED') ||
+        error.message.includes('ERR_INCOMPLETE_CHUNKED_ENCODING') ||
+        error.message.includes('net::')) {
+      const serviceName = baseUrl.includes('31207') ? 'User Service' : 'Product Service'
       throw new Error(`${serviceName} 서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.`)
+    }
+    
+    // 타임아웃 오류 처리
+    if (error.name === 'AbortError') {
+      throw new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.')
     }
     
     throw error

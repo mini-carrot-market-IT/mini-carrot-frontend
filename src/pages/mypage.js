@@ -14,9 +14,10 @@ export default function MyPage() {
   const [user, setUser] = useState(null)
   const [myProducts, setMyProducts] = useState([])
   const [purchasedProducts, setPurchasedProducts] = useState([])
+  const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('my') // 'my', 'purchased', 'profile'
+  const [activeTab, setActiveTab] = useState('dashboard') // 'dashboard', 'my', 'purchased', 'profile'
   
   // 프로필 수정 관련 상태
   const [isEditingNickname, setIsEditingNickname] = useState(false)
@@ -40,23 +41,83 @@ export default function MyPage() {
     setUser(currentUser)
     setNewNickname(currentUser?.nickname || '')
     
+    // URL 파라미터에서 탭 설정
+    const { tab } = router.query
+    if (tab && ['dashboard', 'my', 'purchased', 'profile'].includes(tab)) {
+      setActiveTab(tab)
+    }
+    
     loadData()
   }, [router])
 
   const loadData = async () => {
     try {
       setLoading(true)
-      const [myProductsResponse, purchasedProductsResponse] = await Promise.all([
+      
+      // 기본 사용자 정보는 즉시 설정
+      const currentUser = authService.getCurrentUser()
+      if (currentUser) {
+        setUser(currentUser)
+        setNewNickname(currentUser.nickname || '')
+      }
+      
+      // 대시보드 데이터는 기본값으로 먼저 설정
+      setDashboardData({
+        profile: currentUser || { userId: null, email: '', nickname: '' },
+        stats: {
+          registeredProducts: 0,
+          purchasedProducts: 0,
+          totalTransactions: 0
+        },
+        recentActivity: []
+      })
+      
+      // 백그라운드에서 실제 데이터 로딩 (에러 무시)
+      const userId = currentUser?.userId || currentUser?.id
+      Promise.allSettled([
+        userManagementService.getUserDashboard(),
         productService.getMyProducts(),
-        productService.getPurchasedProducts()
-      ])
+        productService.getPurchasedProducts(),
+        userId ? productService.getUserProductStats(userId) : Promise.resolve({ success: false })
+      ]).then(([dashboardResult, myProductsResult, purchasedProductsResult, statsResult]) => {
+        // 대시보드 데이터 업데이트
+        if (dashboardResult.status === 'fulfilled' && dashboardResult.value.success) {
+          setDashboardData(dashboardResult.value.data)
+          if (dashboardResult.value.data.profile) {
+            setUser(dashboardResult.value.data.profile)
+            setNewNickname(dashboardResult.value.data.profile.nickname || '')
+          }
+        }
+        
+        // 실제 상품 통계 데이터 업데이트 (백엔드 v1.5.4 신규 기능)
+        if (statsResult.status === 'fulfilled' && statsResult.value.success) {
+          const stats = statsResult.value.data
+          setDashboardData(prev => ({
+            ...prev,
+            stats: {
+              registeredProducts: stats.registeredCount || 0,
+              purchasedProducts: stats.purchasedCount || 0,
+              soldProducts: stats.soldCount || 0,
+              totalTransactions: (stats.registeredCount || 0) + (stats.purchasedCount || 0),
+              totalSales: stats.totalSalesAmount || 0,
+              totalPurchases: stats.totalPurchaseAmount || 0
+            }
+          }))
+          console.log('✅ 실제 상품 통계 업데이트:', stats)
+        }
+        
+        // 상품 데이터 업데이트
+        if (myProductsResult.status === 'fulfilled' && myProductsResult.value.success) {
+          setMyProducts(myProductsResult.value.data || [])
+        }
+        
+        if (purchasedProductsResult.status === 'fulfilled' && purchasedProductsResult.value.success) {
+          setPurchasedProducts(purchasedProductsResult.value.data || [])
+        }
+      }).catch(error => {
+        console.warn('백그라운드 데이터 로딩 실패:', error)
+      })
       
-      // Product Service 응답 구조: {success: true, data: products}
-      const myProductsList = myProductsResponse.success && myProductsResponse.data ? myProductsResponse.data : []
-      const purchasedProductsList = purchasedProductsResponse.success && purchasedProductsResponse.data ? purchasedProductsResponse.data : []
-      
-      setMyProducts(myProductsList)
-      setPurchasedProducts(purchasedProductsList)
     } catch (error) {
       console.error('데이터 로딩 실패:', error)
       setError(error.message)
@@ -68,6 +129,35 @@ export default function MyPage() {
   // 상품 업데이트 시 데이터 다시 로드
   const handleProductUpdate = () => {
     loadData()
+  }
+
+  // 통계 새로고침 (백엔드 v1.5.4 대응)
+  const refreshStats = async () => {
+    const currentUser = authService.getCurrentUser()
+    const userId = currentUser?.userId || currentUser?.id
+    
+    if (userId) {
+      try {
+        const statsResponse = await productService.getUserProductStats(userId)
+        if (statsResponse.success) {
+          const stats = statsResponse.data
+          setDashboardData(prev => ({
+            ...prev,
+            stats: {
+              registeredProducts: stats.registeredCount || 0,
+              purchasedProducts: stats.purchasedCount || 0,
+              soldProducts: stats.soldCount || 0,
+              totalTransactions: (stats.registeredCount || 0) + (stats.purchasedCount || 0),
+              totalSales: stats.totalSalesAmount || 0,
+              totalPurchases: stats.totalPurchaseAmount || 0
+            }
+          }))
+          console.log('🔄 통계 새로고침 완료:', stats)
+        }
+      } catch (error) {
+        console.warn('통계 새로고침 실패:', error)
+      }
+    }
   }
 
   // 닉네임 변경
@@ -139,7 +229,17 @@ export default function MyPage() {
   if (loading) {
     return (
       <Layout>
-        <div className={styles.loading}>로딩 중...</div>
+        <div className={styles.container}>
+          <h1 className={styles.title}>마이페이지</h1>
+          <div className={styles.userInfo}>
+            <div className={styles.userAvatar}>👤</div>
+            <div className={styles.userDetails}>
+              <h2>로딩 중...</h2>
+              <p>사용자 정보를 불러오고 있습니다</p>
+            </div>
+          </div>
+          <div className={styles.loading}>데이터를 불러오는 중입니다...</div>
+        </div>
       </Layout>
     )
   }
@@ -168,6 +268,12 @@ export default function MyPage() {
 
         <div className={styles.tabs}>
           <button 
+            className={`${styles.tab} ${activeTab === 'dashboard' ? styles.active : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            대시보드
+          </button>
+          <button 
             className={`${styles.tab} ${activeTab === 'my' ? styles.active : ''}`}
             onClick={() => setActiveTab('my')}
           >
@@ -188,6 +294,107 @@ export default function MyPage() {
         </div>
 
         <div className={styles.content}>
+          {activeTab === 'dashboard' && (
+            <div className={styles.section}>
+              <div className={styles.dashboard}>
+                {/* 통계 카드 */}
+                <div className={styles.statsHeader}>
+                  <h3>내 활동 통계</h3>
+                  <button onClick={refreshStats} className={styles.refreshButton}>
+                    🔄 새로고침
+                  </button>
+                </div>
+                <div className={styles.statsGrid}>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon}>📦</div>
+                    <div className={styles.statInfo}>
+                      <h3>등록한 상품</h3>
+                      <p className={styles.statNumber}>{dashboardData?.stats?.registeredProducts || 0}개</p>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon}>🛒</div>
+                    <div className={styles.statInfo}>
+                      <h3>구매한 상품</h3>
+                      <p className={styles.statNumber}>{dashboardData?.stats?.purchasedProducts || 0}개</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon}>✅</div>
+                    <div className={styles.statInfo}>
+                      <h3>판매 완료</h3>
+                      <p className={styles.statNumber}>{dashboardData?.stats?.soldProducts || 0}개</p>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon}>💰</div>
+                    <div className={styles.statInfo}>
+                      <h3>총 매출</h3>
+                      <p className={styles.statNumber}>{(dashboardData?.stats?.totalSales || 0).toLocaleString()}원</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 최근 활동 */}
+                <div className={styles.recentActivity}>
+                  <h3>최근 활동</h3>
+                  {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
+                    <div className={styles.activityList}>
+                      {dashboardData.recentActivity.map((activity, index) => (
+                        <div key={index} className={styles.activityItem}>
+                          <span className={styles.activityIcon}>{activity.icon || '📝'}</span>
+                          <span className={styles.activityText}>{activity.message}</span>
+                          <span className={styles.activityTime}>{activity.timestamp}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.noActivity}>
+                      <p>최근 활동이 없습니다.</p>
+                      <p className={styles.hint}>상품을 등록하거나 구매해보세요!</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 빠른 액션 */}
+                <div className={styles.quickActions}>
+                  <h3>빠른 액션</h3>
+                  <div className={styles.actionButtons}>
+                    <button 
+                      onClick={() => router.push('/products/create')}
+                      className={styles.actionButton}
+                    >
+                      <span className={styles.actionIcon}>➕</span>
+                      상품 등록
+                    </button>
+                    <button 
+                      onClick={() => router.push('/')}
+                      className={styles.actionButton}
+                    >
+                      <span className={styles.actionIcon}>🛍️</span>
+                      상품 둘러보기
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('my')}
+                      className={styles.actionButton}
+                    >
+                      <span className={styles.actionIcon}>📦</span>
+                      내 상품 관리
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('profile')}
+                      className={styles.actionButton}
+                    >
+                      <span className={styles.actionIcon}>⚙️</span>
+                      프로필 설정
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'my' && (
             <div className={styles.section}>
               {myProducts.length === 0 ? (

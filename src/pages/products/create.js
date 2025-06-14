@@ -81,8 +81,13 @@ export default function CreateProduct() {
       
       // Product Service 응답 구조: {success: true, data: {productId, status}}
       if (createResponse.success) {
-        alert('상품이 성공적으로 등록되었습니다!')
-        router.push('/')
+        alert('🎉 상품이 성공적으로 등록되었습니다!\n마이페이지에서 확인하실 수 있습니다.')
+        
+        // 실시간 스트림 업데이트 (백엔드 v1.5.4에서 자동 처리)
+        console.log('✅ 상품 등록 완료, 실시간 업데이트 예정:', createResponse.data)
+        
+        // 마이페이지로 이동하여 등록된 상품 확인
+        router.push('/mypage?tab=my')
       } else {
         throw new Error('상품 등록에 실패했습니다.')
       }
@@ -122,12 +127,12 @@ export default function CreateProduct() {
               required
             >
               <option value="">카테고리 선택</option>
-              <option value="전자기기">전자기기</option>
-              <option value="의류">의류</option>
-              <option value="도서">도서</option>
-              <option value="가구">가구</option>
-              <option value="스포츠">스포츠</option>
-              <option value="기타">기타</option>
+              <option value="전자제품">전자제품</option>
+              <option value="패션잡화">패션잡화</option>
+              <option value="유아용품">유아용품</option>
+              <option value="스포츠용품">스포츠용품</option>
+              <option value="식품">식품</option>
+              <option value="신발">신발</option>
             </select>
           </div>
 

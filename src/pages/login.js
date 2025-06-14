@@ -45,29 +45,29 @@ export default function Login() {
           {error && <div className={styles.error}>{error}</div>}
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
-              <label htmlFor="email">이메일</label>
-              <input
-                type="email"
-                id="email"
+            <label htmlFor="email">이메일</label>
+            <input
+              type="email"
+              id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="이메일을 입력하세요"
-                required
-              />
-            </div>
+              required
+            />
+          </div>
             <div className={styles.formGroup}>
-              <label htmlFor="password">비밀번호</label>
-              <input
-                type="password"
-                id="password"
+            <label htmlFor="password">비밀번호</label>
+            <input
+              type="password"
+              id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="비밀번호를 입력하세요"
-                required
-              />
-            </div>
+              required
+            />
+          </div>
             <button 
               type="submit" 
               disabled={loading}
@@ -75,7 +75,7 @@ export default function Login() {
             >
               {loading ? '로그인 중...' : '로그인'}
             </button>
-          </form>
+        </form>
           <p className={styles.linkText}>
             계정이 없으신가요? <a href="/register">회원가입</a>
           </p>

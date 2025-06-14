@@ -126,7 +126,7 @@ export class RealTimeUpdates {
     }
 
     try {
-      this.eventSource = new EventSource('/api/analytics/stream')
+      this.eventSource = new EventSource('http://211.188.63.186:31251/api/analytics/stream')
       
       this.eventSource.onopen = () => {
         console.log('실시간 업데이트 연결됨')

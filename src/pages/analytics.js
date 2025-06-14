@@ -1,18 +1,33 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { analyticsService } from '../services/analyticsService'
+import { analyticsService, globalProductStream } from '../services/analyticsService'
 import { globalRealTimeUpdates } from '../services/notificationService'
 import { authService } from '../services/authService'
+import RealTimeDashboard, { useRealTimeUpdates } from '../components/RealTimeUpdates'
+import { useUserNotifications, userNotificationService } from '../services/userNotificationService'
 import styles from '../styles/Analytics.module.css'
 
 export default function Analytics() {
   const [user, setUser] = useState(null)
   const [dashboardStats, setDashboardStats] = useState({})
+  const [productDashboard, setProductDashboard] = useState({})
   const [popularProducts, setPopularProducts] = useState([])
+  const [realtimeProducts, setRealtimeProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [categoryStats, setCategoryStats] = useState({})
+
+  const [productStreamConnected, setProductStreamConnected] = useState(false)
+  
+  // 실시간 업데이트 Hook 사용
+  const { isConnected, stats: realTimeStats } = useRealTimeUpdates()
+  
+  // User 실시간 알림 Hook 사용
+  const { 
+    isConnected: userSSEConnected, 
+    notifications: userNotifications, 
+    sendTestNotification,
+    clearNotifications 
+  } = useUserNotifications()
 
   useEffect(() => {
     // 로그인 체크
@@ -22,6 +37,7 @@ export default function Analytics() {
       return
     }
     setUser(currentUser)
+    console.log('🔍 현재 로그인 사용자:', currentUser)
 
     // 초기 데이터 로드
     loadDashboardData()
@@ -34,6 +50,25 @@ export default function Analytics() {
       globalRealTimeUpdates.addEventListener('STATS_UPDATE', handleStatsUpdate)
     }
 
+    // 실시간 상품 스트림 연결
+    if (globalProductStream) {
+      globalProductStream.connect()
+      
+      // 실시간 상품 데이터 리스너 등록
+      globalProductStream.addEventListener('connected', () => {
+        setProductStreamConnected(true)
+      })
+      
+      globalProductStream.addEventListener('products', (products) => {
+        setRealtimeProducts(products)
+        console.log('📦 실시간 상품 업데이트:', products.length, '개')
+      })
+      
+      globalProductStream.addEventListener('error', () => {
+        setProductStreamConnected(false)
+      })
+    }
+
     // 1분마다 데이터 갱신
     const interval = setInterval(loadDashboardData, 60000)
 
@@ -42,24 +77,25 @@ export default function Analytics() {
       if (globalRealTimeUpdates) {
         globalRealTimeUpdates.removeEventListener('STATS_UPDATE', handleStatsUpdate)
       }
+      if (globalProductStream) {
+        globalProductStream.disconnect()
+      }
     }
   }, [])
 
-  useEffect(() => {
-    if (selectedCategory !== 'all') {
-      loadCategoryStats(selectedCategory)
-    }
-  }, [selectedCategory])
+
 
   const loadDashboardData = async () => {
     try {
       setLoading(true)
-      const [stats, popular] = await Promise.all([
+      const [analyticsStats, productStats, popular] = await Promise.all([
         analyticsService.getDashboardStats(),
+        analyticsService.getProductDashboard(),
         analyticsService.getPopularProducts(10)
       ])
       
-      setDashboardStats(stats)
+      setDashboardStats(analyticsStats)
+      setProductDashboard(productStats)
       setPopularProducts(popular)
     } catch (err) {
       setError('대시보드 데이터를 불러오는데 실패했습니다: ' + err.message)
@@ -68,28 +104,14 @@ export default function Analytics() {
     }
   }
 
-  const loadCategoryStats = async (category) => {
-    try {
-      const stats = await analyticsService.getCategoryStats(category)
-      setCategoryStats(stats)
-    } catch (err) {
-      console.error('카테고리 통계 조회 실패:', err)
-    }
-  }
+
 
   const handleStatsUpdate = (data) => {
     // 실시간 통계 업데이트
     setDashboardStats(prev => ({ ...prev, ...data }))
   }
 
-  const categories = [
-    { value: 'all', label: '전체' },
-    { value: 'electronics', label: '전자제품' },
-    { value: 'fashion', label: '패션' },
-    { value: 'home', label: '생활용품' },
-    { value: 'books', label: '도서' },
-    { value: 'sports', label: '스포츠' }
-  ]
+
 
   if (loading && !dashboardStats.totalViews) {
     return (
@@ -116,6 +138,17 @@ export default function Analytics() {
         <div className={styles.titleSection}>
           <h1>📊 실시간 분석 대시보드</h1>
           <p>미니 당근의 실시간 통계를 확인하세요</p>
+          <div className={styles.connectionStatusGroup}>
+            <div className={`${styles.connectionStatus} ${isConnected ? styles.connected : styles.disconnected}`}>
+              {isConnected ? '🟢 Analytics SSE 연결됨' : '🔴 Analytics SSE 연결 끊김'}
+            </div>
+            <div className={`${styles.connectionStatus} ${productStreamConnected ? styles.connected : styles.disconnected}`}>
+              {productStreamConnected ? '🟢 Product Stream 연결됨' : '🔴 Product Stream 연결 끊김'}
+            </div>
+            <div className={`${styles.connectionStatus} ${userSSEConnected ? styles.connected : styles.disconnected}`}>
+              {userSSEConnected ? '🟢 User SSE 연결됨' : '🔴 User SSE 연결 끊김'}
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -124,24 +157,24 @@ export default function Analytics() {
           </div>
         )}
 
-        {/* 통계 카드 섹션 */}
+        {/* 핵심 통계 카드 섹션 */}
         <section className={styles.statsCards}>
           <div className={styles.statCard}>
             <div className={styles.statIcon}>👁️</div>
             <div className={styles.statContent}>
               <h3>총 조회수</h3>
               <p className={styles.statNumber}>
-                {dashboardStats.totalViews?.toLocaleString() || '0'}
+                {(realTimeStats.totalViews || dashboardStats.totalViews || 0).toLocaleString()}
               </p>
             </div>
           </div>
 
           <div className={styles.statCard}>
-            <div className={styles.statIcon}>👥</div>
+            <div className={styles.statIcon}>🔍</div>
             <div className={styles.statContent}>
-              <h3>활성 사용자</h3>
+              <h3>총 검색 수</h3>
               <p className={styles.statNumber}>
-                {dashboardStats.activeUsers?.toLocaleString() || '0'}
+                {(realTimeStats.totalSearches || dashboardStats.totalSearches || 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -149,9 +182,9 @@ export default function Analytics() {
           <div className={styles.statCard}>
             <div className={styles.statIcon}>📦</div>
             <div className={styles.statContent}>
-              <h3>등록된 상품</h3>
+              <h3>전체 상품</h3>
               <p className={styles.statNumber}>
-                {dashboardStats.totalProducts?.toLocaleString() || '0'}
+                {(productDashboard.totalProducts || 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -159,27 +192,59 @@ export default function Analytics() {
           <div className={styles.statCard}>
             <div className={styles.statIcon}>💰</div>
             <div className={styles.statContent}>
-              <h3>완료된 거래</h3>
+              <h3>판매 완료</h3>
               <p className={styles.statNumber}>
-                {dashboardStats.totalSales?.toLocaleString() || '0'}
+                {(productDashboard.soldProducts || 0).toLocaleString()}
               </p>
             </div>
           </div>
         </section>
 
-        {/* 인기 상품 섹션 */}
+        {/* 실시간 상품 스트림 섹션 */}
+        {productStreamConnected && realtimeProducts.length > 0 && (
+          <section className={styles.realtimeProducts}>
+            <h2>🔴 실시간 상품 업데이트 ({realtimeProducts.length}개)</h2>
+            <div className={styles.productGrid}>
+              {realtimeProducts.slice(0, 6).map((product) => (
+                <div key={product.productId} className={styles.realtimeProductCard}>
+                  <img 
+                    src={product.imageUrl ? `http://211.188.63.186:31251${product.imageUrl}` : '/images/default-product.svg'} 
+                    alt={product.title}
+                    className={styles.realtimeProductImage}
+                    onError={(e) => {
+                      e.target.src = '/images/default-product.svg'
+                    }}
+                  />
+                  <div className={styles.realtimeProductInfo}>
+                    <h4>{product.title}</h4>
+                    <p className={styles.realtimePrice}>{product.price?.toLocaleString()}원</p>
+                    <p className={styles.realtimeCategory}>{product.category}</p>
+                    <span className={`${styles.realtimeStatus} ${product.status === 'SOLD' ? styles.sold : styles.available}`}>
+                      {product.status === 'SOLD' ? '판매완료' : '판매중'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 인기 상품 TOP 5 */}
         <section className={styles.popularProducts}>
-          <h2>🔥 실시간 인기 상품 TOP 10</h2>
+          <h2>🔥 인기 상품 TOP 5</h2>
           <div className={styles.popularList}>
             {popularProducts.length > 0 ? (
-              popularProducts.map((product, index) => (
-                <div key={product.id} className={styles.popularItem}>
+              popularProducts.slice(0, 5).map((product, index) => (
+                <div key={product.productId} className={styles.popularItem}>
                   <div className={styles.rank}>#{index + 1}</div>
                   <div className={styles.productInfo}>
                     <img 
-                      src={product.imageUrl || '/images/default-product.svg'} 
+                      src={product.imageUrl ? `http://211.188.63.186:31251${product.imageUrl}` : '/images/default-product.svg'} 
                       alt={product.title}
                       className={styles.productImage}
+                      onError={(e) => {
+                        e.target.src = '/images/default-product.svg'
+                      }}
                     />
                     <div className={styles.productDetails}>
                       <h4>{product.title}</h4>
@@ -188,7 +253,9 @@ export default function Analytics() {
                     </div>
                   </div>
                   <div className={styles.views}>
-                    👁️ {product.viewCount?.toLocaleString() || 0}
+                    <span className={`${styles.status} ${product.status === 'SOLD' ? styles.sold : styles.available}`}>
+                      {product.status === 'SOLD' ? '판매완료' : '판매중'}
+                    </span>
                   </div>
                 </div>
               ))
@@ -200,63 +267,77 @@ export default function Analytics() {
           </div>
         </section>
 
-        {/* 카테고리별 분석 섹션 */}
-        <section className={styles.categoryAnalysis}>
-          <h2>📋 카테고리별 분석</h2>
-          <div className={styles.categorySelector}>
-            {categories.map(category => (
-              <button
-                key={category.value}
-                className={`${styles.categoryButton} ${
-                  selectedCategory === category.value ? styles.active : ''
-                }`}
-                onClick={() => setSelectedCategory(category.value)}
-              >
-                {category.label}
-              </button>
-            ))}
-          </div>
-
-          {selectedCategory !== 'all' && categoryStats && (
-            <div className={styles.categoryStats}>
-              <div className={styles.categoryStatItem}>
-                <h4>총 상품 수</h4>
-                <p>{categoryStats.totalProducts?.toLocaleString() || 0}</p>
-              </div>
-              <div className={styles.categoryStatItem}>
-                <h4>총 조회수</h4>
-                <p>{categoryStats.totalViews?.toLocaleString() || 0}</p>
-              </div>
-              <div className={styles.categoryStatItem}>
-                <h4>평균 가격</h4>
-                <p>{categoryStats.avgPrice?.toLocaleString() || 0}원</p>
-              </div>
-              <div className={styles.categoryStatItem}>
-                <h4>판매 완료</h4>
-                <p>{categoryStats.soldItems?.toLocaleString() || 0}</p>
-              </div>
+        {/* 카테고리별 상품 분포 */}
+        {productDashboard.categoryStats && Object.keys(productDashboard.categoryStats).length > 0 && (
+          <section className={styles.categoryDistribution}>
+            <h2>📊 카테고리별 상품 분포</h2>
+            <div className={styles.categoryGrid}>
+              {Object.entries(productDashboard.categoryStats)
+                .sort(([,a], [,b]) => b - a) // 상품 수 많은 순으로 정렬
+                .map(([category, count]) => (
+                <div key={category} className={styles.categoryItem}>
+                  <span className={styles.categoryName}>{category}</span>
+                  <span className={styles.categoryCount}>{count}개</span>
+                  <div className={styles.categoryBar}>
+                    <div 
+                      className={styles.categoryBarFill}
+                      style={{ 
+                        width: `${(count / Math.max(...Object.values(productDashboard.categoryStats))) * 100}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </section>
+        )}
+
+        {/* User SSE 실시간 알림 테스트 섹션 */}
+        <section className={styles.userNotifications}>
+          <h2>🔔 실시간 사용자 알림</h2>
+          <div className={styles.notificationStatus}>
+            <div className={`${styles.connectionStatus} ${userSSEConnected ? styles.connected : styles.disconnected}`}>
+              {userSSEConnected ? '🟢 User SSE 연결됨' : '🔴 User SSE 연결 끊김'}
+            </div>
+            <button 
+              className={styles.testButton}
+              onClick={sendTestNotification}
+              disabled={!userSSEConnected}
+            >
+              🧪 테스트 알림 보내기
+            </button>
+            <button 
+              className={styles.clearButton}
+              onClick={clearNotifications}
+            >
+              🗑️ 알림 지우기
+            </button>
+          </div>
+          
+          <div className={styles.notificationList}>
+            {userNotifications.length > 0 ? (
+              userNotifications.slice(-3).reverse().map((notification) => (
+                <div key={notification.id} className={`${styles.notificationItem} ${styles[notification.type]}`}>
+                  <div className={styles.notificationHeader}>
+                    <span className={styles.notificationTitle}>{notification.title}</span>
+                    <span className={styles.notificationTime}>
+                      {notification.timestamp.toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className={styles.notificationMessage}>
+                    {notification.message}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.emptyNotifications}>
+                📭 아직 받은 실시간 알림이 없습니다
+              </div>
+            )}
+          </div>
         </section>
 
-        {/* 실시간 활동 피드 */}
-        <section className={styles.activityFeed}>
-          <h2>⚡ 실시간 활동</h2>
-          <div className={styles.activityList}>
-            <div className={styles.activityItem}>
-              <span className={styles.activityTime}>방금 전</span>
-              <span className={styles.activityText}>새로운 상품이 등록되었습니다</span>
-            </div>
-            <div className={styles.activityItem}>
-              <span className={styles.activityTime}>1분 전</span>
-              <span className={styles.activityText}>거래가 완료되었습니다</span>
-            </div>
-            <div className={styles.activityItem}>
-              <span className={styles.activityTime}>3분 전</span>
-              <span className={styles.activityText}>새로운 사용자가 가입했습니다</span>
-            </div>
-          </div>
-        </section>
+
       </main>
     </div>
   )

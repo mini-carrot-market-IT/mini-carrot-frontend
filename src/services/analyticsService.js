@@ -11,7 +11,26 @@ export const analyticsService = {
         userId = currentUser?.id || 'anonymous'
       }
 
-      const url = `/api/analytics/view/${productId}?category=${encodeURIComponent(category)}&userId=${userId}`
+      // 카테고리 매핑 (백엔드에서 지원하지 않는 카테고리를 지원하는 카테고리로 변환)
+      const categoryMapping = {
+        '의류': '패션잡화',
+        '옷': '패션잡화',
+        '패션': '패션잡화',
+        '전자기기': '전자제품',
+        '가전': '전자제품',
+        '아기용품': '유아용품',
+        '베이비': '유아용품',
+        '운동': '스포츠용품',
+        '스포츠': '스포츠용품',
+        '음식': '식품',
+        '먹거리': '식품'
+      }
+
+      const mappedCategory = categoryMapping[category] || category || '기타'
+      
+      console.log(`📊 상품 조회 추적: 상품 ${productId}, 카테고리 ${mappedCategory}`)
+      
+      const url = `/api/analytics/view/${productId}?category=${encodeURIComponent(mappedCategory)}&userId=${userId}`
       const response = await productApi.post(url)
       return response
     } catch (error) {
@@ -21,7 +40,7 @@ export const analyticsService = {
     }
   },
 
-  // 검색 추적
+  // 검색 추적 (수정됨: POST 요청으로 변경)
   async trackSearch(keyword, category = 'all', resultCount = 0, userId = null) {
     try {
       if (!userId) {
@@ -29,9 +48,28 @@ export const analyticsService = {
         userId = currentUser?.id || 'anonymous'
       }
 
+      // 카테고리 매핑 적용
+      const categoryMapping = {
+        '의류': '패션잡화',
+        '옷': '패션잡화',
+        '패션': '패션잡화',
+        '전자기기': '전자제품',
+        '가전': '전자제품',
+        '아기용품': '유아용품',
+        '베이비': '유아용품',
+        '운동': '스포츠용품',
+        '스포츠': '스포츠용품',
+        '음식': '식품',
+        '먹거리': '식품'
+      }
+
+      const mappedCategory = category === 'all' ? 'all' : (categoryMapping[category] || category)
+
+      console.log(`🔍 검색 추적: 키워드 "${keyword}", 카테고리 ${mappedCategory}, 결과 ${resultCount}개`)
+
       const response = await productApi.post('/api/analytics/search', {
         keyword,
-        category,
+        category: mappedCategory,
         resultCount,
         userId
       })
@@ -53,14 +91,40 @@ export const analyticsService = {
     }
   },
 
-  // 인기 상품 순위
+  // 인기 상품 순위 (새로운 API 사용)
   async getPopularProducts(limit = 10) {
     try {
-      const response = await productApi.get(`/api/analytics/popular-products?limit=${limit}`)
+      const response = await productApi.get(`/api/products/popular?limit=${limit}`)
+      // 새로운 응답 구조: {success: true, data: products}
       return response.success ? response.data : []
     } catch (error) {
       console.error('인기 상품 조회 실패:', error.message)
       return []
+    }
+  },
+
+  // 상품 대시보드 통계 (새로운 API)
+  async getProductDashboard() {
+    try {
+      const response = await productApi.get('/api/products/dashboard')
+      return response.success ? response.data : {
+        totalProducts: 0,
+        soldProducts: 0,
+        availableProducts: 0,
+        totalPurchases: 0,
+        categoryStats: {},
+        timestamp: Date.now()
+      }
+    } catch (error) {
+      console.error('상품 대시보드 조회 실패:', error.message)
+      return {
+        totalProducts: 0,
+        soldProducts: 0,
+        availableProducts: 0,
+        totalPurchases: 0,
+        categoryStats: {},
+        timestamp: Date.now()
+      }
     }
   },
 
@@ -75,14 +139,31 @@ export const analyticsService = {
     }
   },
 
-  // 실시간 대시보드 데이터
+  // Analytics 대시보드 데이터 (수정됨)
   async getDashboardStats() {
     try {
       const response = await productApi.get('/api/analytics/dashboard')
-      return response.success ? response.data : {}
+      // 새로운 백엔드 응답 형식에 따라 수정
+      return {
+        totalProducts: response.totalProducts || 0,
+        totalViews: response.totalViews || 0,
+        totalSearches: response.totalSearches || 0,
+        categoryStats: response.categoryStats || {},
+        topKeywords: response.topKeywords || [],
+        message: response.message || '',
+        timestamp: response.timestamp || Date.now()
+      }
     } catch (error) {
       console.error('대시보드 통계 조회 실패:', error.message)
-      return {}
+      return {
+        totalProducts: 0,
+        totalViews: 0,
+        totalSearches: 0,
+        categoryStats: {},
+        topKeywords: [],
+        message: '',
+        timestamp: Date.now()
+      }
     }
   },
 
@@ -94,6 +175,93 @@ export const analyticsService = {
     } catch (error) {
       console.warn('배치 이벤트 전송 실패:', error.message)
       return null
+    }
+  }
+}
+
+// 실시간 상품 스트림 SSE 클래스 (새로운 기능)
+export class ProductStreamSSE {
+  constructor() {
+    this.eventSource = null
+    this.listeners = new Map()
+    this.isConnected = false
+  }
+
+  // 실시간 상품 스트림 연결
+  connect() {
+    if (this.eventSource) {
+      this.disconnect()
+    }
+
+    try {
+      this.eventSource = new EventSource('http://211.188.63.186:31251/api/stream/products')
+      
+      this.eventSource.onopen = () => {
+        console.log('🟢 실시간 상품 스트림 연결됨')
+        this.isConnected = true
+        this.emit('connected')
+      }
+
+      this.eventSource.onmessage = (event) => {
+        try {
+          const products = JSON.parse(event.data)
+          console.log('📦 실시간 상품 데이터:', products)
+          this.emit('products', products)
+        } catch (error) {
+          console.error('상품 스트림 데이터 파싱 오류:', error)
+        }
+      }
+
+      this.eventSource.onerror = (error) => {
+        console.error('❌ 상품 스트림 연결 오류:', error)
+        this.isConnected = false
+        this.emit('error', error)
+      }
+
+    } catch (error) {
+      console.error('상품 스트림 연결 실패:', error)
+    }
+  }
+
+  // 연결 해제
+  disconnect() {
+    if (this.eventSource) {
+      this.eventSource.close()
+      this.eventSource = null
+      this.isConnected = false
+      console.log('상품 스트림 연결 해제됨')
+    }
+  }
+
+  // 이벤트 리스너 추가
+  addEventListener(eventType, callback) {
+    if (!this.listeners.has(eventType)) {
+      this.listeners.set(eventType, [])
+    }
+    this.listeners.get(eventType).push(callback)
+  }
+
+  // 이벤트 리스너 제거
+  removeEventListener(eventType, callback) {
+    if (this.listeners.has(eventType)) {
+      const callbacks = this.listeners.get(eventType)
+      const index = callbacks.indexOf(callback)
+      if (index > -1) {
+        callbacks.splice(index, 1)
+      }
+    }
+  }
+
+  // 이벤트 발생
+  emit(eventType, data) {
+    if (this.listeners.has(eventType)) {
+      this.listeners.get(eventType).forEach(callback => {
+        try {
+          callback(data)
+        } catch (error) {
+          console.error(`상품 스트림 이벤트 처리 오류 (${eventType}):`, error)
+        }
+      })
     }
   }
 }
@@ -150,5 +318,6 @@ export class AnalyticsTracker {
   }
 }
 
-// 전역 분석 추적기 인스턴스
-export const globalAnalytics = typeof window !== 'undefined' ? new AnalyticsTracker() : null 
+// 전역 인스턴스들
+export const globalAnalytics = typeof window !== 'undefined' ? new AnalyticsTracker() : null
+export const globalProductStream = typeof window !== 'undefined' ? new ProductStreamSSE() : null 
