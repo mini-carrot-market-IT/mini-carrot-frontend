@@ -96,8 +96,9 @@ export const analyticsService = {
   // 실시간 조회수 가져오기
   async getViewCount(productId) {
     try {
+      console.log(`🔍 조회수 API 호출 시작: 상품 ${productId}`);
       const response = await productApi.get(`/api/analytics/product/${productId}/views`)
-      console.log(`👁️ 조회수 조회: 상품 ${productId}`, response)
+      console.log(`👁️ 조회수 조회 원본 응답: 상품 ${productId}`, response)
       
       // API 응답 구조: {"productId": 59, "viewCount": 4}
       if (response && typeof response.viewCount === 'number') {
@@ -112,9 +113,11 @@ export const analyticsService = {
       }
       
       console.warn(`⚠️ 조회수 파싱 실패, 응답 구조:`, response)
+      console.warn(`⚠️ 응답 타입: ${typeof response}, viewCount 타입: ${typeof response?.viewCount}`)
       return 0
     } catch (error) {
-      console.warn('조회수 조회 실패:', error.message)
+      console.error(`❌ 조회수 조회 실패 (상품 ${productId}):`, error.message)
+      console.error(`❌ 전체 에러 객체:`, error)
       return 0
     }
   },

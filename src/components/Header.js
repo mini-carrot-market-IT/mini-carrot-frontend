@@ -41,8 +41,8 @@ export default function Header() {
           {isLoggedIn && (
             <>
               <Link href="/products/create" className={styles.navLink}>
-                상품 등록
-              </Link>
+            상품 등록
+          </Link>
               <Link href="/analytics" className={styles.navLink}>
                 📊 분석
               </Link>
